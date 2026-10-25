@@ -1,0 +1,26 @@
+[manifest]
+version = "1.0"
+priority = 122
+
+# Appended to main.lua in dependency order. Nothing here patches game code by pattern -- the
+# Game.start_run and G.FUNCS.cash_out wrappers are installed at runtime from the first update
+# tick (see src/Init.lua), which is what puts the cash_out wrapper outside Handy's patched body
+# instead of racing it, and what guarantees G and G.FUNCS exist.
+#
+# Priority sits one above NegativeMine's so the load order against the rest of the stack is
+# fixed rather than incidental; this mod shares no state with any of them.
+[[patches]]
+[patches.copy]
+target = "main.lua"
+position = "append"
+sources = [
+  "src/Core.lua",
+  "src/Config.lua",
+  "src/Reload.lua",
+  "src/Grant.lua",
+  "src/Eternals.lua",
+  "src/Hooks.lua",
+  "src/Menu.lua",
+  "src/Command.lua",
+  "src/Init.lua",
+]

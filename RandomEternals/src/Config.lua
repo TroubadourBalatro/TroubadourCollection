@@ -1,0 +1,267 @@
+--- RandomEternals - Config.lua
+--
+-- THIS IS THE FILE YOU EDIT. Everything else in this mod exists to carry out what is written
+-- here. Changes take effect on the next NEW RUN, with no restart: Lovely bakes the table below
+-- in at launch, but this file is read off the disk again every time a run begins, and the table
+-- it holds then is the one that run uses.
+--
+-- A run already in progress keeps the config it started with -- per_round and per_ante
+-- included, so a run does not change shape halfway through. To pick up an edit without
+-- starting a new run, the DebugPlus command randometernals_reload re-reads this file on the spot.
+--
+-- A file that will not load -- a missing comma, a stray brace -- changes nothing: the config
+-- already in memory stays, and the log says what was wrong with the file.
+--
+-- Every entry is a table with one required field and six optional ones:
+--
+--   key         required. The joker's center id, "j_..." -- the full list is at the bottom
+--               of this file. A key that names nothing is logged and skipped, never fatal.
+--   edition     "foil", "holo", "polychrome" or "negative". Omit for a plain joker.
+--               Only one; the game has no way to hold two at once. A negative joker costs no
+--               joker slot, because set_edition raises the slot limit to pay for itself.
+--   eternal     true to make it unsellable and undestroyable.
+--   perishable  true to debuff it after 5 rounds. Cannot be combined with eternal -- the
+--               game's own setters refuse the second one -- so eternal wins and the
+--               perishable is logged and dropped, unless the joker is one that cannot be
+--               eternal anyway, in which case the perishable is applied.
+--   rental      true to charge $3 at the end of every round.
+--   pinned      true to pin it to the left of the joker row.
+--   sell        the joker's sell value, in dollars. Omit to leave the value alone entirely,
+--               tracking the card's cost the way the game does. 0 is allowed.
+--   count       how many copies of this entry to grant. Default 1.
+--
+-- A sell value set here is PINNED: the card holds that number through shop discounts,
+-- inflation and rentals, all of which move an ordinary joker's value. A real Egg or Gift Card
+-- still raises it from there, so { key = "j_egg", sell = 20 } is an Egg that has already grown.
+--
+-- Cards with no sell field are not touched at all -- their value tracks their cost exactly as
+-- the game intends.
+--
+-- Editions and stickers are applied by the same functions the game uses for shop cards, so
+-- anything the game refuses, this refuses too. Eleven jokers can never be eternal and eighteen
+-- can never be perishable; those are marked in the list at the bottom of this file, and asking
+-- anyway gets you the joker without the sticker plus a line in the log.
+
+if not RandomEternals then RandomEternals = {} end
+
+RandomEternals.config = {
+   -- Set false to keep the mod loaded but grant nothing, without emptying the lists below.
+   enabled = true,
+
+   -- Granted once, at the start of a NEW run. Never on Continue or a save load: those restore
+   -- a board that already has them, and granting again would stack another copy every time
+   -- the run is reopened.
+   start = {
+      -- The lines between these two markers belong to the Random Eternals Challenge toggle on
+      -- the New Run screen: every new run rewrites them, with a fresh draw when it is ticked
+      -- and with the last draw commented out when it is not. Put your own entries outside.
+      -- >>> random eternals
+      { key = "j_sly", eternal = true },
+      { key = "j_baseball", eternal = true },
+      { key = "j_ceremonial", eternal = true },
+      -- <<< random eternals
+   -- { key = "j_merry_andy", edition = "negative", eternal = true, count = 3 },
+   -- { key = "j_brainstorm", edition = "foil", eternal = true },
+   },
+
+   -- Granted at EVERY cash-out: once per round, so three times an ante -- or twice, when a
+   -- blind was skipped, since a skipped blind never reaches a cash-out.
+   --
+   -- Independent of per_ante below. On a boss blind both fire, this one first.
+   per_round = {
+      -- { key = "j_vampire", edition = "negative" },
+   },
+
+   -- Granted at the cash-out after each boss blind -- that is, once per ante, as the ante
+   -- ends. Not after the small or big blind.
+   per_ante = {
+      -- { key = "j_troubadour", edition = "negative" },
+      -- { key = "j_hologram" },
+   },
+
+   -- Replaces per_ante for one specific ante. The number is the ante that was just COMPLETED,
+   -- so [1] fires at the first boss cash-out, when ante 1 is over and ante 2 is next.
+   --
+   -- An entry of {} means "nothing at the end of that ante". An ante with no entry here falls
+   -- back to per_ante above.
+   per_ante_overrides = {
+      -- Written by the Random Eternals Challenge in its "1 per ante" mode, the same way as the
+      -- markers in start above. Put your own overrides outside.
+      -- >>> random eternals per ante
+      -- <<< random eternals per ante
+      -- [3] = { { key = "j_dna", edition = "polychrome" } },
+      -- [8] = {},
+   },
+
+   -- Whether each grant writes a line to the log. Rejections and refused stickers are logged
+   -- regardless -- a config that is not doing what it says needs to say so.
+   log_grants = true,
+}
+
+--
+-- ---------------------------------------------------------------------------------------
+-- Every joker in the game, by rarity, in collection order. 150 keys.
+--
+-- Watch the spellings: the game's own ids carry a few typos and a couple of jokers are keyed
+-- by an older name -- j_gluttenous_joker (Gluttonous), j_selzer (Seltzer), j_ring_master
+-- (Showman), j_trousers (Spare Trousers), j_flash (Flash Card), j_wee (Wee Joker).
+--
+--   Common (61)
+--     j_joker                Joker
+--     j_greedy_joker         Greedy Joker
+--     j_lusty_joker          Lusty Joker
+--     j_wrathful_joker       Wrathful Joker
+--     j_gluttenous_joker     Gluttonous Joker
+--     j_jolly                Jolly Joker
+--     j_zany                 Zany Joker
+--     j_mad                  Mad Joker
+--     j_crazy                Crazy Joker
+--     j_droll                Droll Joker
+--     j_sly                  Sly Joker
+--     j_wily                 Wily Joker
+--     j_clever               Clever Joker
+--     j_devious              Devious Joker
+--     j_crafty               Crafty Joker
+--     j_half                 Half Joker
+--     j_credit_card          Credit Card
+--     j_banner               Banner
+--     j_mystic_summit        Mystic Summit
+--     j_8_ball               8 Ball
+--     j_misprint             Misprint
+--     j_raised_fist          Raised Fist
+--     j_chaos                Chaos the Clown
+--     j_scary_face           Scary Face
+--     j_abstract             Abstract Joker
+--     j_delayed_grat         Delayed Gratification
+--     j_gros_michel          Gros Michel              <- eternal not allowed
+--     j_even_steven          Even Steven
+--     j_odd_todd             Odd Todd
+--     j_scholar              Scholar
+--     j_business             Business Card
+--     j_supernova            Supernova
+--     j_ride_the_bus         Ride the Bus             <- perishable not allowed
+--     j_egg                  Egg
+--     j_runner               Runner                   <- perishable not allowed
+--     j_ice_cream            Ice Cream                <- eternal not allowed
+--     j_splash               Splash
+--     j_blue_joker           Blue Joker
+--     j_faceless             Faceless Joker
+--     j_green_joker          Green Joker              <- perishable not allowed
+--     j_superposition        Superposition
+--     j_todo_list            To Do List
+--     j_cavendish            Cavendish                <- eternal not allowed
+--     j_red_card             Red Card                 <- perishable not allowed
+--     j_square               Square Joker             <- perishable not allowed
+--     j_riff_raff            Riff-raff
+--     j_photograph           Photograph
+--     j_reserved_parking     Reserved Parking
+--     j_mail                 Mail-In Rebate
+--     j_hallucination        Hallucination
+--     j_fortune_teller       Fortune Teller
+--     j_juggler              Juggler
+--     j_drunkard             Drunkard
+--     j_golden               Golden Joker
+--     j_popcorn              Popcorn                  <- eternal not allowed
+--     j_walkie_talkie        Walkie Talkie
+--     j_smiley               Smiley Face
+--     j_ticket               Golden Ticket
+--     j_swashbuckler         Swashbuckler
+--     j_hanging_chad         Hanging Chad
+--     j_shoot_the_moon       Shoot the Moon
+--
+--   Uncommon (64)
+--     j_stencil              Joker Stencil
+--     j_four_fingers         Four Fingers
+--     j_mime                 Mime
+--     j_ceremonial           Ceremonial Dagger        <- perishable not allowed
+--     j_marble               Marble Joker
+--     j_loyalty_card         Loyalty Card
+--     j_dusk                 Dusk
+--     j_fibonacci            Fibonacci
+--     j_steel_joker          Steel Joker
+--     j_hack                 Hack
+--     j_pareidolia           Pareidolia
+--     j_space                Space Joker
+--     j_burglar              Burglar
+--     j_blackboard           Blackboard
+--     j_sixth_sense          Sixth Sense
+--     j_constellation        Constellation            <- perishable not allowed
+--     j_hiker                Hiker
+--     j_card_sharp           Card Sharp
+--     j_madness              Madness                  <- perishable not allowed
+--     j_seance               Seance
+--     j_vampire              Vampire                  <- perishable not allowed
+--     j_shortcut             Shortcut
+--     j_hologram             Hologram                 <- perishable not allowed
+--     j_cloud_9              Cloud 9
+--     j_rocket               Rocket                   <- perishable not allowed
+--     j_midas_mask           Midas Mask
+--     j_luchador             Luchador                 <- eternal not allowed
+--     j_gift                 Gift Card
+--     j_turtle_bean          Turtle Bean              <- eternal not allowed
+--     j_erosion              Erosion
+--     j_to_the_moon          To the Moon
+--     j_stone                Stone Joker
+--     j_lucky_cat            Lucky Cat                <- perishable not allowed
+--     j_bull                 Bull
+--     j_diet_cola            Diet Cola                <- eternal not allowed
+--     j_trading              Trading Card
+--     j_flash                Flash Card               <- perishable not allowed
+--     j_trousers             Spare Trousers           <- perishable not allowed
+--     j_ramen                Ramen                    <- eternal not allowed
+--     j_selzer               Seltzer                  <- eternal not allowed
+--     j_castle               Castle                   <- perishable not allowed
+--     j_mr_bones             Mr. Bones                <- eternal not allowed
+--     j_acrobat              Acrobat
+--     j_sock_and_buskin      Sock and Buskin
+--     j_troubadour           Troubadour
+--     j_certificate          Certificate
+--     j_smeared              Smeared Joker
+--     j_throwback            Throwback
+--     j_rough_gem            Rough Gem
+--     j_bloodstone           Bloodstone
+--     j_arrowhead            Arrowhead
+--     j_onyx_agate           Onyx Agate
+--     j_glass                Glass Joker              <- perishable not allowed
+--     j_ring_master          Showman
+--     j_flower_pot           Flower Pot
+--     j_merry_andy           Merry Andy
+--     j_oops                 Oops! All 6s
+--     j_idol                 The Idol
+--     j_seeing_double        Seeing Double
+--     j_matador              Matador
+--     j_satellite            Satellite
+--     j_cartomancer          Cartomancer
+--     j_astronomer           Astronomer
+--     j_bootstraps           Bootstraps
+--
+--   Rare (20)
+--     j_dna                  DNA
+--     j_vagabond             Vagabond
+--     j_baron                Baron
+--     j_obelisk              Obelisk                  <- perishable not allowed
+--     j_baseball             Baseball Card
+--     j_ancient              Ancient Joker
+--     j_campfire             Campfire
+--     j_blueprint            Blueprint
+--     j_wee                  Wee Joker                <- perishable not allowed
+--     j_hit_the_road         Hit the Road
+--     j_duo                  The Duo
+--     j_trio                 The Trio
+--     j_family               The Family
+--     j_order                The Order
+--     j_tribe                The Tribe
+--     j_stuntman             Stuntman
+--     j_invisible            Invisible Joker          <- eternal not allowed
+--     j_brainstorm           Brainstorm
+--     j_drivers_license      Driver's License
+--     j_burnt                Burnt Joker
+--
+--   Legendary (5)
+--     j_caino                Caino
+--     j_triboulet            Triboulet
+--     j_yorick               Yorick
+--     j_chicot               Chicot
+--     j_perkeo               Perkeo
+--
+-- ---------------------------------------------------------------------------------------

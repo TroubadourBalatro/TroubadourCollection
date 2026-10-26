@@ -63,7 +63,7 @@ do
       return {n=G.UIT.R, config={align = "cm", padding = 0.05, minh = 0.7}, nodes={
          create_toggle{col = true, label = "Random Eternals Challenge", label_scale = 0.3, w = 0, scale = 0.7,
             ref_table = state, ref_value = 'enabled'},
-         {n=G.UIT.C, config={align = "cm", minw = 3, minh = 0.6}, nodes={
+         {n=G.UIT.C, config={align = "cm", minw = 4.2, minh = 0.6}, nodes={
             {n=G.UIT.O, config={align = "cm", func = 'randometernals_eternals_box', object = Moveable()}},
          }},
       }}
